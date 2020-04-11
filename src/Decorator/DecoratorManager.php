@@ -5,61 +5,56 @@ namespace src\Decorator;
 use DateTime;
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use src\Decorator\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use src\Integration\DataProvider;
+use src\Integration\RequestParamsInterface;
 
 class DecoratorManager extends DataProvider
 {
     public $cache;
     public $logger;
 
-    /**
-     * @param string $host
-     * @param string $user
-     * @param string $password
-     * @param CacheItemPoolInterface $cache
-     */
-    public function __construct($host, $user, $password, CacheItemPoolInterface $cache)
+    public function __construct(CacheItemPoolInterface $cache, LoggerInterface $logger)
     {
-        parent::__construct($host, $user, $password);
         $this->cache = $cache;
-    }
-
-    public function setLogger(LoggerInterface $logger)
-    {
         $this->logger = $logger;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getResponse(array $input)
+    public function getResponse(RequestParamsInterface $params): ResponseInterface
     {
         try {
-            $cacheKey = $this->getCacheKey($input);
+            $cacheKey = $this->getCacheKey($params);
             $cacheItem = $this->cache->getItem($cacheKey);
             if ($cacheItem->isHit()) {
                 return $cacheItem->get();
             }
 
-            $result = parent::get($input);
+            $response = parent::get($params);
+
+            $result = $this->prepareResponse($response);
 
             $cacheItem
                 ->set($result)
                 ->expiresAt(
                     (new DateTime())->modify('+1 day')
                 );
-
-            return $result;
         } catch (Exception $e) {
-            $this->logger->critical('Error');
+            $this->logger->critical(sprintf('Error: %s', $e->getMessage()));
+            throw new $e;
         }
 
-        return [];
+        return $result;
     }
 
-    public function getCacheKey(array $input)
+    private function getCacheKey(RequestParamsInterface $params): string
     {
-        return json_encode($input);
+        return json_encode($params->getData(), JSON_THROW_ON_ERROR);
+    }
+
+    private function prepareResponse(PsrResponseInterface $response): ResponseInterface
+    {
+
     }
 }
