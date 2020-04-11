@@ -6,7 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class DataProvider
 {
-    protected function get(RequestParamsInterface $params): ResponseInterface
+    public function get(RequestParamsInterface $params): ResponseInterface
     {
         // returns a response from external service
     }
