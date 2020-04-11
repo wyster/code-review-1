@@ -13,8 +13,8 @@ use src\Integration\RequestParamsInterface;
 
 class DecoratorManager extends DataProvider
 {
-    public $cache;
-    public $logger;
+    private $cache;
+    private $logger;
 
     public function __construct(CacheItemPoolInterface $cache, LoggerInterface $logger)
     {
