@@ -11,15 +11,17 @@ use Psr\Log\LoggerInterface;
 use src\Integration\DataProvider;
 use src\Integration\RequestParamsInterface;
 
-class DecoratorManager extends DataProvider
+class ImNotDecoratorManager
 {
     private $cache;
     private $logger;
+    private $dataProvider;
 
-    public function __construct(CacheItemPoolInterface $cache, LoggerInterface $logger)
+    public function __construct(CacheItemPoolInterface $cache, LoggerInterface $logger, DataProvider $dataProvider)
     {
         $this->cache = $cache;
         $this->logger = $logger;
+        $this->dataProvider = $dataProvider;
     }
 
     public function getResponse(RequestParamsInterface $params): ResponseInterface
@@ -31,7 +33,7 @@ class DecoratorManager extends DataProvider
                 return $cacheItem->get();
             }
 
-            $response = parent::get($params);
+            $response = $this->dataProvider->get($params);
 
             $result = $this->prepareResponse($response);
 
